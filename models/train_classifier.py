@@ -1,12 +1,43 @@
 import sys
-
+# import libraries
+import pandas as pd
+import numpy as np
+from sqlalchemy import create_engine
+import os
+import re
+import nltk
+nltk.download('punkt')
+nltk.download('wordnet')
+nltk.download('stopwords')
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem.porter import PorterStemmer
+from nltk.stem.wordnet import WordNetLemmatizer
+from sklearn.pipeline import Pipeline
+stopwords = stopwords.words('english')
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.multioutput import MultiOutputClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
 
 def load_data(database_filepath):
-    pass
-
+    engine = create_engine('sqlite:////'+ database_filepath)
+    df = pd.read_sql_table('Disaster', engine)
+    X = df.message.values
+    Y = df[df.columns[4:]].values
+    return X, Y
 
 def tokenize(text):
-    pass
+    pattern = re.compile(r"[^A-Za-z]")
+    text = re.sub(pattern, ' ', str(text))
+    token = word_tokenize(text)
+    token = [word for word in token if word not in stopwords]
+    porter = PorterStemmer()
+    lemma = WordNetLemmatizer()
+    lemmatized = [lemma.lemmatize(word).lower().strip() for word in token]
+    clean_token = [porter.stem(word) for word in lemmatized]
+    return clean_token
 
 
 def build_model():
