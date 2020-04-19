@@ -25,7 +25,8 @@ def clean_data(df):
 
 
 def save_data(df, database_filename):
-    pass  
+    engine = create_engine('sqlite:///InsertDatabaseName.db')
+    df.to_sql('Disaster', engine, index=False)
 
 
 def main():
