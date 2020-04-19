@@ -18,22 +18,23 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.svm import LinearSVC
 
 def load_data(database_filepath):
-    engine = create_engine('sqlite:////'+ database_filepath)
-    df = pd.read_sql_table('Disaster', engine)
+    engine = create_engine('sqlite:///'+ database_filepath)
+    df = pd.read_sql_table('Disaster_res', engine)
     X = df.message.values
     Y = df[df.columns[4:]].values
-    return X, Y
+    category_names = list(df.columns[4:])
+    return X, Y, category_names
 
 def tokenize(text):
-    pattern = re.compile(r"[^A-Za-z]")
-    text = re.sub(pattern, ' ', str(text))
-    token = word_tokenize(text)
-    token = [word for word in token if word not in stopwords]
-    porter = PorterStemmer()
-    lemma = WordNetLemmatizer()
-    lemmatized = [lemma.lemmatize(word).lower().strip() for word in token]
-    clean_token = [porter.stem(word) for word in lemmatized]
-    return clean_token
+    text = re.sub(r"[^a-zA-Z0-9]", " ", text.lower())
+    tokens = word_tokenize(text)
+    lemmatizer = WordNetLemmatizer()
+
+    clean_tokens = []
+    for tok in tokens:
+        clean_tok = lemmatizer.lemmatize(tok).lower().strip()
+        clean_tokens.append(clean_tok)
+    return clean_tokens
 
 
 def build_model():
@@ -49,10 +50,12 @@ def build_model():
     cv = GridSearchCV(pipeline, param_grid=parameters, scoring='precision_samples', cv = 5)
     return cv
 
-
 def evaluate_model(model, X_test, Y_test, category_names):
     Y_pred = model.predict(X_test)
-
+    print(classification_report(Y_test, Y_pred, target_names = category_names))
+    print('---------------------------------')
+    for i in range(Y_test.shape[1]):
+        print('%25s accuracy : %.2f' %(category_names[i], accuracy_score(Y_test[:,i], Y_pred[:,i])))
 
 def save_model(model, model_filepath):
     joblib.dump(model, model_filepath)
@@ -64,13 +67,13 @@ def main():
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))
         X, Y, category_names = load_data(database_filepath)
         X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
-        
+
         print('Building model...')
         model = build_model()
-        
+
         print('Training model...')
         model.fit(X_train, Y_train)
-        
+
         print('Evaluating model...')
         evaluate_model(model, X_test, Y_test, category_names)
 
