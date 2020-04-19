@@ -1,25 +1,21 @@
 import sys
-# import libraries
-import pandas as pd
-import numpy as np
-from sqlalchemy import create_engine
-import os
-import re
 import nltk
-nltk.download('punkt')
-nltk.download('wordnet')
-nltk.download('stopwords')
+import re
+nltk.download(['punkt', 'wordnet'])
+import warnings
+warnings.filterwarnings("ignore")
+import pandas as pd
+from sqlalchemy import create_engine
 from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
-from nltk.stem.porter import PorterStemmer
-from nltk.stem.wordnet import WordNetLemmatizer
-from sklearn.pipeline import Pipeline
-stopwords = stopwords.words('english')
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
+from nltk.stem import WordNetLemmatizer
 from sklearn.multioutput import MultiOutputClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from sklearn.externals import joblib
+from sklearn.metrics import classification_report, accuracy_score
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.svm import LinearSVC
 
 def load_data(database_filepath):
     engine = create_engine('sqlite:////'+ database_filepath)
@@ -41,15 +37,25 @@ def tokenize(text):
 
 
 def build_model():
-    pass
+    pipeline = Pipeline([
+        ('vect', CountVectorizer(tokenizer=tokenize)),
+        ('tfidf', TfidfTransformer()),
+        ('clf', MultiOutputClassifier(OneVsRestClassifier(LinearSVC(random_state = 0))))
+    ])
+    parameters = {
+                'tfidf__smooth_idf':[True, False],
+                'clf__estimator__estimator__C': [1, 2, 5]
+             }
+    cv = GridSearchCV(pipeline, param_grid=parameters, scoring='precision_samples', cv = 5)
+    return cv
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
-    pass
+    Y_pred = model.predict(X_test)
 
 
 def save_model(model, model_filepath):
-    pass
+    joblib.dump(model, model_filepath)
 
 
 def main():
