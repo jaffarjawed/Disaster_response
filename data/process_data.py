@@ -9,7 +9,19 @@ def load_data(messages_filepath, categories_filepath):
 
 
 def clean_data(df):
-    pass
+    categories = df.categories.str.split(';', expand = True)
+    row = categories.loc[0]
+    category_colnames = [word.split('-')[0] for word in row]
+    categories.columns = category_colnames
+    for column in categories:
+    # set each value to be the last character of the string
+    categories[column] = [word.split('-')[1] for word in categories[column]]
+    # convert column from string to numeric
+    categories[column] = categories[column] = pd.to_numeric(categories[column])
+    df.drop('categories', inplace = True, axis = 1)
+    df = pd.concat([df, categories], axis = 1,  sort= False)
+    df.drop_duplicates(keep = False,inplace = True)
+    return df
 
 
 def save_data(df, database_filename):
