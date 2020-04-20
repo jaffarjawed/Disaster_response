@@ -21,4 +21,6 @@
 6. My project will include a web app where an emergency worker can input a new message and get classification results in several categories. The web app will also display visualizations of the data. This project will show off your software skills, including your ability to create basic data pipelines and write clean, organized code!
 
 Below are a few screenshots of the web app.
+![Screenshot (26)](https://user-images.githubusercontent.com/23507650/79707771-3103c200-82db-11ea-81ed-b7fa05c19104.png)
+![Screenshot (23)](https://user-images.githubusercontent.com/23507650/79707773-33feb280-82db-11ea-84ab-38711a6023a8.png)
 
