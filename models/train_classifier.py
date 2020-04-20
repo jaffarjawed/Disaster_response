@@ -18,6 +18,10 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.svm import LinearSVC
 
 def load_data(database_filepath):
+    """
+    Loading the dataset through pandas as and function returns the
+    feature variable(X) and targer variabels(Y)
+    """
     engine = create_engine('sqlite:///'+ database_filepath)
     df = pd.read_sql_table('Disaster_res', engine)
     X = df.message.values
@@ -26,6 +30,10 @@ def load_data(database_filepath):
     return X, Y, category_names
 
 def tokenize(text):
+    """
+    Here we removing the puctuations, tokenizing the dataframe and then doing finally lemmatization and 
+    function returns clean_tokens
+    """
     text = re.sub(r"[^a-zA-Z0-9]", " ", text.lower())
     tokens = word_tokenize(text)
     lemmatizer = WordNetLemmatizer()
@@ -38,19 +46,27 @@ def tokenize(text):
 
 
 def build_model():
+    """
+    First of all building the pipeline with CountVectorizer, TfidfTransformar and MultiOutputClassifier
+    """
     pipeline = Pipeline([
         ('vect', CountVectorizer(tokenizer=tokenize)),
         ('tfidf', TfidfTransformer()),
         ('clf', MultiOutputClassifier(OneVsRestClassifier(LinearSVC(random_state = 0))))
     ])
+#     Here i am doing hyperparameters tuning for our model
     parameters = {
                 'tfidf__smooth_idf':[True, False],
                 'clf__estimator__estimator__C': [1, 2, 5]
              }
+#   applying grid search for finding optimal parameters with cv = 3
     cv = GridSearchCV(pipeline, param_grid=parameters, scoring='precision_samples', cv = 5)
     return cv
 
 def evaluate_model(model, X_test, Y_test, category_names):
+    """
+    Here I am evaluating my model by accuracy_sscore and classification_report
+    """
     Y_pred = model.predict(X_test)
     print(classification_report(Y_test, Y_pred, target_names = category_names))
     print('---------------------------------')
@@ -58,6 +74,9 @@ def evaluate_model(model, X_test, Y_test, category_names):
         print('%25s accuracy : %.2f' %(category_names[i], accuracy_score(Y_test[:,i], Y_pred[:,i])))
 
 def save_model(model, model_filepath):
+    '''
+    Saving model for web deployment
+    '''
     joblib.dump(model, model_filepath)
 
 

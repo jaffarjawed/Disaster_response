@@ -3,26 +3,40 @@ import pandas as pd
 from sqlalchemy import create_engine
 
 def load_data(messages_filepath, categories_filepath):
+    '''
+    Loading the dataset into dataframe and merging them ttogether.
+    '''
     messages = pd.read_csv(messages_filepath)
     categories = pd.read_csv(categories_filepath)
     df = pd.merge(messages, categories, left_on='id', right_on='id', how='outer')
     return df
 
 def clean_data(df):
+    """
+    Here doin fianl preprocessing of data before saviig to sql
+    """
+#   spllitting the categories column of dataframe on  ;
     categories = df.categories.str.split(';', expand = True)
+#   Grabbing the first row from the dataframe
     row = categories.loc[0]
     category_colnames = row.apply(lambda x: x[:-2]).values.tolist()
+#   replacing the categories columns name by category_colnames
     categories.columns = category_colnames
     categories.related.loc[categories.related == 'related-2'] = 'related-1'
     for column in categories:
         categories[column] = categories[column].astype(str).str[-1]
         categories[column] = pd.to_numeric(categories[column])
+#   dropping the categories column form df and cancatening with preprocessed categories
     df.drop('categories', axis = 1, inplace = True)
     df = pd.concat([df, categories], axis = 1)
+#    Removing the duplicates from the dataframe
     df.drop_duplicates(subset = 'id', inplace = True)
     return df
 
 def save_data(df, database_filepath):
+    """
+    Saving the dataframe to sql with the help of sqlachemy module
+    """
     engine = create_engine('sqlite:///' + database_filepath)
     df.to_sql('Disaster_res', engine, index=False)
 
